@@ -2,3 +2,5 @@
 Ollivanders/Ollivanders.iml
 out
 *.iml
+bin
+plugins

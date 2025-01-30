@@ -5,6 +5,7 @@ import net.pottercraft.ollivanders2.Ollivanders2API;
 import net.pottercraft.ollivanders2.common.Ollivanders2Common;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -28,6 +29,7 @@ public class HARMONIA_NECTERE_PASSUS extends O2StationarySpell
 {
     public static final int minRadiusConfig = 1;
     public static final int maxRadiusConfig = 1;
+    private static final long serialVersionUID = -7240508142982935134L;
 
     /**
      * The location of this cabinet's twin
@@ -47,7 +49,7 @@ public class HARMONIA_NECTERE_PASSUS extends O2StationarySpell
     /**
      * The cooldown between uses
      */
-    int cooldown = Ollivanders2Common.ticksPerSecond * 30;
+    int cooldown = Ollivanders2Common.ticksPerSecond * 5;
 
     /**
      * Simple constructor used for deserializing saved stationary spells at server start. Do not use to cast spell.
@@ -195,7 +197,7 @@ public class HARMONIA_NECTERE_PASSUS extends O2StationarySpell
     @NotNull
     public Map<String, String> serializeSpellData()
     {
-        Map<String, String> serializedLoc = common.serializeLocation(location, twinLabel);
+        Map<String, String> serializedLoc = common.serializeLocation(twinCabinetLocation, twinLabel);
 
         if (serializedLoc == null)
             serializedLoc = new HashMap<>();
@@ -252,6 +254,11 @@ public class HARMONIA_NECTERE_PASSUS extends O2StationarySpell
         {
             inUseBy.put(player, cooldown);
 
+            // Center the player twin cabinet x and y values by removing decimals and setting the decimal to 0.5
+            Location newLoc = twin.location.clone();
+            newLoc.setX(Math.floor(twinCabinetLocation.getX()) + 0.5);
+            newLoc.setZ(Math.floor(twinCabinetLocation.getZ()) + 0.5);
+
             new BukkitRunnable()
             {
                 @Override
@@ -259,7 +266,9 @@ public class HARMONIA_NECTERE_PASSUS extends O2StationarySpell
                 {
                     if (!event.isCancelled())
                     {
-                        p.addTeleportEvent(player, twinCabinetLocation, true);
+                        p.addTeleportEvent(player, newLoc, false);
+                        // Play sound using spigot, the sheep dying noise
+                        player.playSound(player.getLocation(), Sound.ITEM_DYE_USE, 1, 1);
                     }
                 }
             }.runTaskLater(p, Ollivanders2Common.ticksPerSecond);

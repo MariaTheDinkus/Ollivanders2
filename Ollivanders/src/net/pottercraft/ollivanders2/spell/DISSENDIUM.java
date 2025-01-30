@@ -9,7 +9,10 @@ import net.pottercraft.ollivanders2.stationaryspell.COLLOPORTUS;
 import net.pottercraft.ollivanders2.stationaryspell.O2StationarySpell;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Openable;
+import org.bukkit.block.data.type.Door;
 import org.bukkit.block.data.type.TrapDoor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +32,7 @@ public final class DISSENDIUM extends O2Spell
 
     private int openTime;
     private boolean isOpen;
-    private Block trapDoorBlock;
+    private Block doorBlock;
 
     /**
      * Default constructor for use in generating spell text.  Do not use to cast the spell.
@@ -104,7 +107,10 @@ public final class DISSENDIUM extends O2Spell
             // if the open time has expired, close the trap door and kill the spell
             if (openTime <= 0)
             {
-                closeTrapDoor();
+                if (getTargetBlock().getBlockData() instanceof TrapDoor)
+                    closeTrapDoor();
+                else if (getTargetBlock().getBlockData() instanceof Door)
+                    closeDoor();
                 kill();
             }
         }
@@ -123,10 +129,56 @@ public final class DISSENDIUM extends O2Spell
             if (targetBlockData instanceof TrapDoor)
                 openTrapDoor();
 
+            // if the target is a trap door, open it
+            if (targetBlockData instanceof Door)
+                openDoor();
+
             // kill the spell if we did not open a trap door after hitting a target
             if (!isOpen)
                 kill();
         }
+    }
+
+    /**
+     * Opens the trapdoor at target block
+     */
+    private void openDoor()
+    {
+        Block target = getTargetBlock();
+        if (target == null)
+        {
+            common.printDebugMessage("DISSENDIUM.openDoor: target block is null", null, null, true);
+            kill();
+            return;
+        }
+
+        // check for colloportus spell locking this door
+        Location targetLocation = target.getLocation();
+        List<O2StationarySpell> spellsAtLocation = Ollivanders2API.getStationarySpells().getStationarySpellsAtLocation(targetLocation);
+
+        for (O2StationarySpell statSpell : spellsAtLocation)
+        {
+            if (statSpell instanceof COLLOPORTUS)
+            {
+                kill();
+                return;
+            }
+        }
+
+        BlockData targetBlockData = target.getBlockData();
+
+        // check to see if the trap door is already open
+        if (((Door) targetBlockData).isOpen())
+        {
+            kill();
+            return;
+        }
+
+        doorBlock = target;
+        ((Door) targetBlockData).setOpen(true);
+        doorBlock.setBlockData(targetBlockData);
+
+        isOpen = true;
     }
 
     /**
@@ -164,11 +216,27 @@ public final class DISSENDIUM extends O2Spell
             return;
         }
 
-        trapDoorBlock = target;
+        doorBlock = target;
         ((TrapDoor) targetBlockData).setOpen(true);
-        trapDoorBlock.setBlockData(targetBlockData);
+        doorBlock.setBlockData(targetBlockData);
 
         isOpen = true;
+    }
+
+    /**
+     * Close the door
+     */
+    private void closeDoor()
+    {
+        if (!isOpen)
+            return;
+
+        // close the trap door
+        Door doorData = (Door) doorBlock.getBlockData();
+        doorData.setOpen(false);
+        doorBlock.setBlockData(doorData);
+
+        isOpen = false;
     }
 
     /**
@@ -180,9 +248,9 @@ public final class DISSENDIUM extends O2Spell
             return;
 
         // close the trap door
-        TrapDoor trapDoorData = (TrapDoor) trapDoorBlock.getBlockData();
+        TrapDoor trapDoorData = (TrapDoor) doorBlock.getBlockData();
         trapDoorData.setOpen(false);
-        trapDoorBlock.setBlockData(trapDoorData);
+        doorBlock.setBlockData(trapDoorData);
 
         isOpen = false;
     }

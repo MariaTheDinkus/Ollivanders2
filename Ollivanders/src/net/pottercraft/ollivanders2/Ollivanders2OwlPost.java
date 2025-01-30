@@ -13,8 +13,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.UUID;
 
 /**
@@ -81,6 +83,18 @@ public class Ollivanders2OwlPost
             courier = entity;
             deliveryPackage = item;
             courierOriginalLocation = entity.getLocation();
+        }
+
+        /**
+         * Alternate constructor for loading from file data using sender, senderName, recipient, courier, deliveryPackage, and courierOriginalLocation
+         */
+        Delivery(UUID sender, String senderName, UUID recipient, Entity courier, ItemStack deliveryPackage, Location courierOriginalLocation) {
+            this.sender = sender;
+            this.senderName = senderName;
+            this.recipient = recipient;
+            this.courier = courier;
+            this.deliveryPackage = deliveryPackage;
+            this.courierOriginalLocation = courierOriginalLocation;
         }
     }
 

@@ -2,6 +2,7 @@ package net.pottercraft.ollivanders2.item.enchantment;
 
 import net.pottercraft.ollivanders2.Ollivanders2;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -9,8 +10,13 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.xml.stream.events.Namespace;
 
 /**
  * Port key enchantment
@@ -22,7 +28,9 @@ public class PORTUS extends Enchantment
     /**
      * The teleport destination for this portkey
      */
-    Location location;
+    double x;
+    double y;
+    double z;
 
     /**
      * Constructor
@@ -37,13 +45,13 @@ public class PORTUS extends Enchantment
         super(plugin, mag, args, itemLore);
         enchantmentType = ItemEnchantmentType.GEMINIO;
 
-        parseLocation();
+        parseLocation(args);
     }
 
     /**
      * Parse the location from the args
      */
-    private void parseLocation()
+    private void parseLocation(String args)
     {
         if (args == null)
             return;
@@ -73,11 +81,9 @@ public class PORTUS extends Enchantment
             return;
         }
 
-        World world = p.getServer().getWorld(split[0]);
-        if (world == null)
-            return;
-
-        location = new Location(world, x, y, z);
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     /**
@@ -106,14 +112,27 @@ public class PORTUS extends Enchantment
             return;
         }
 
-        // teleport the player to the location
-        if (location == null)
-            location = ((Player) entity).getBedSpawnLocation();
+        if (event.getItem().getItemStack().hasItemMeta()) {
+            ItemMeta meta = event.getItem().getItemStack().getItemMeta();
+            PersistentDataContainer container = meta.getPersistentDataContainer();
 
-        if (location != null) // location could still be null
-            p.addTeleportEvent((Player) entity, location, true);
-        else
-            common.printDebugMessage("Null location in PORTUS.doItemPickup()", null, null, false);
+            // Create the namespace key for the enchantment args
+            NamespacedKey key = NamespacedKey.fromString("ollivanders2:o2enchantment_args");
+            String args = container.get(key, PersistentDataType.STRING);
+            parseLocation(args);
+            // Debug the location
+            common.printDebugMessage("Portkey location: " + x + " " + y + " " + z, null, null, false);
+            Location location = new Location(entity.getWorld(), x, y, z);
+
+            // teleport the player to the location
+            if (location == null)
+                location = ((Player) entity).getBedSpawnLocation();
+
+            if (location != null) // location could still be null
+                p.addTeleportEvent((Player) entity, location, true);
+            else
+                common.printDebugMessage("Null location in PORTUS.doItemPickup()", null, null, false);
+        }
     }
 
     /**

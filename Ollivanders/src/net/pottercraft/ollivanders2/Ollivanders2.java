@@ -2025,7 +2025,7 @@ public class Ollivanders2 extends JavaPlugin
     @Deprecated
     public Material getTempBlockOriginalMaterial(@NotNull Block block)
     {
-        return tempBlocks.getOrDefault(block, null);
+        return tempBlocks.get(block);
     }
 
     /**

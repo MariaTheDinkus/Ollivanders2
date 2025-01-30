@@ -95,7 +95,7 @@ public class OllivandersListener implements Listener
     /**
      * Number of ticks to delay thread start for
      */
-    public static int threadDelay = (int) (Ollivanders2Common.ticksPerSecond * 0.5);
+    public static int threadDelay = (int) (Ollivanders2Common.ticksPerSecond * 0.25);
 
     /**
      * Constructor
@@ -117,7 +117,7 @@ public class OllivandersListener implements Listener
         boolean useFastSpells = p.getConfig().getBoolean("fastSpells", false);
 
         if (useFastSpells)
-            threadDelay = (int) (Ollivanders2Common.ticksPerSecond * 0.25);
+            threadDelay = (int) (Ollivanders2Common.ticksPerSecond * 0.1);
 
         // register listeners
         p.getServer().getPluginManager().registerEvents(this, p);
@@ -213,7 +213,12 @@ public class OllivandersListener implements Listener
         // remove all recipients if this is not a "spoken" spell
         if (spellType == O2SpellType.APPARATE || Divination.divinationSpells.contains(spellType))
         {
-            recipients.clear();
+            recipients.forEach(player1 -> {
+                if (!player1.equals(player))
+                {
+                    recipients.remove(player1);
+                }
+            });
             return;
         }
 
@@ -562,6 +567,14 @@ public class OllivandersListener implements Listener
                 // play a sound and visual effect when they right-click their destined wand with no spell
                 if (Ollivanders2API.playerCommon.wandCheck(player, EquipmentSlot.HAND) < 2)
                 {
+                    if (player.isSneaking()) {
+                        // Reset master spell to none
+                        p.getO2Player(player).setMasterSpell(null);
+
+                        player.sendMessage("Master spell reset to none.");
+
+                        return;
+                    }
                     Location location = player.getLocation();
                     location.setY(location.getY() + 1.6);
                     player.getWorld().playEffect(location, Effect.ENDER_SIGNAL, 0);
@@ -601,12 +614,12 @@ public class OllivandersListener implements Listener
         if (o2p == null)
             return;
 
-        boolean reverse = false;
-        // right click rotates through spells backwards
-        if (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK)
-            reverse = true;
+        boolean forward = true;
+        // shift right click rotates through spells backwards
+        if (player.isSneaking() && (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK))
+            forward = false;
 
-        o2p.shiftMasterSpell(reverse);
+        o2p.shiftMasterSpell(forward);
         O2SpellType spell = o2p.getMasterSpell();
         if (spell != null)
         {

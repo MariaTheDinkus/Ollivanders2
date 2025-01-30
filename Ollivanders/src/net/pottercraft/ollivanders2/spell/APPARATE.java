@@ -95,6 +95,24 @@ public final class APPARATE extends O2Spell
      * @param plugin    a callback to the MC plugin
      * @param player    the player who cast this spell
      * @param rightWand which wand the player was using
+     */
+    public APPARATE(@NotNull Ollivanders2 plugin, @NotNull Player player, @NotNull Double rightWand)
+    {
+        super(plugin, player, rightWand);
+        spellType = O2SpellType.APPARATE;
+        branch = O2MagicBranch.CHARMS;
+
+        this.wordsArray = new String[]{};
+
+        initSpell();
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param plugin    a callback to the MC plugin
+     * @param player    the player who cast this spell
+     * @param rightWand which wand the player was using
      * @param wordsArray the arguments to the apparate spell
      */
     public APPARATE(@NotNull Ollivanders2 plugin, @NotNull Player player, @NotNull Double rightWand, @NotNull String[] wordsArray)
@@ -177,9 +195,11 @@ public final class APPARATE extends O2Spell
             {
                 doApparate();
             }
-        }.runTaskLater(p, Ollivanders2Common.ticksPerSecond * 2);
+        //}.runTaskLater(p, Ollivanders2Common.ticksPerSecond * 2);
+        }.run();
 
-        kill();
+
+            kill();
     }
 
     private void doApparate()

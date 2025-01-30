@@ -2,11 +2,8 @@ package net.pottercraft.ollivanders2.player;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import net.pottercraft.ollivanders2.common.EntityCommon;
 import net.pottercraft.ollivanders2.common.Ollivanders2Common;
@@ -469,7 +466,7 @@ public class O2Player
      *
      * @param spell the mastered spell
      */
-    public void setMasterSpell(@NotNull O2SpellType spell)
+    public void setMasterSpell(O2SpellType spell)
     {
         masterSpell = spell;
     }
@@ -826,6 +823,9 @@ public class O2Player
      */
     public void shiftMasterSpell(boolean reverse)
     {
+        // make a copy of the mastered spells list and sort alphabetically
+        List<O2SpellType> masteredSpells = new ArrayList<>(this.masteredSpells);
+        masteredSpells.sort(Comparator.comparing(O2SpellType::toString));
         // shift to the next spell if there is more than one mastered spell
         if (masteredSpells.size() >= 1)
         {

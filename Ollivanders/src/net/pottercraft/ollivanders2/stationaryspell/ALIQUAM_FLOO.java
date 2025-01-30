@@ -12,7 +12,9 @@ import net.pottercraft.ollivanders2.common.Ollivanders2Common;
 import net.pottercraft.ollivanders2.item.O2ItemType;
 import net.pottercraft.ollivanders2.stationaryspell.events.FlooNetworkEvent;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -22,6 +24,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.Effect;
 
 import net.pottercraft.ollivanders2.Ollivanders2;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,7 +122,13 @@ public class ALIQUAM_FLOO extends O2StationarySpell
     @Override
     public void kill()
     {
-        super.kill();
+        flair(20);
+        kill = true;
+
+        Player caster = p.getServer().getPlayer(playerUUID);
+        if (caster != null)
+            caster.sendMessage(Ollivanders2.chatColor + "Your floo location named " + flooName + " has ended.");
+
         flooNetworkLocations.remove(this);
     }
 
@@ -129,6 +138,11 @@ public class ALIQUAM_FLOO extends O2StationarySpell
     @Override
     public void checkEffect()
     {
+        Block block = location.getBlock();
+        if (block.getType().isSolid() && (block.getType() != Material.CAMPFIRE || block.getType() == Material.SOUL_CAMPFIRE))
+        {
+            kill();
+        }
         // if this fireplace is already active,
         if (isWorking())
         {
@@ -144,15 +158,17 @@ public class ALIQUAM_FLOO extends O2StationarySpell
         {
             for (Item item : EntityCommon.getItems(location, 1))
             {
-                if (!O2ItemType.FLOO_POWDER.isItemThisType(item))
-                    continue;
+                if (item.getItemStack().getType() == Material.REDSTONE && item.getItemStack().hasItemMeta()) {
+                    ItemMeta meta = item.getItemStack().getItemMeta();
+                    if (meta.getAsString().equals("{PublicBukkitValues:{\"ollivanders2:o2enchantment_id\":\"Floo Powder\"},display:{Lore:['{\"extra\":[{\"text\":\"Glittery, silver powder\"}],\"text\":\"\"}'],Name:'{\"extra\":[{\"text\":\"Floo Powder\"}],\"text\":\"\"}'}}")) {
+                        item.remove();
+                        playEffect();
 
-                item.remove();
-                playEffect();
+                        common.printDebugMessage("Turning on floo " + flooName, null, null, false);
 
-                common.printDebugMessage("Turning on floo " + flooName, null, null, false);
-
-                cooldown = Ollivanders2Common.ticksPerSecond * 30;
+                        cooldown = Ollivanders2Common.ticksPerSecond * 30;
+                    }
+                }
             }
         }
     }
@@ -272,7 +288,7 @@ public class ALIQUAM_FLOO extends O2StationarySpell
                 else
                     flooNetworkEvents.remove(player.getUniqueId());
             }
-        }.runTaskLater(p, Ollivanders2Common.ticksPerSecond);
+        }.runTaskLater(p, 5);
     }
 
     /**
